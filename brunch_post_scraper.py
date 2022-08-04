@@ -67,6 +67,10 @@ other_keywords = first_keyword.find_next_siblings('li')
 for keyword in other_keywords:
     keyword_list.append(no_spaces(keyword.text))
 
+author_belong = soup.find('span', attrs={'class':'author_belong'}).span.find_next_sibling('span').get_text()
+author_desc = soup.find('p', attrs={'class':'txt_desc'}).text
+num_subscription = soup.find('span', attrs={'class':'num_subscription'}).text
+
 print('title:', title)
 print('sub_title:', sub_title)
 print('author:', author)
@@ -76,3 +80,6 @@ print('likes:', 0 if likes=='' else int(likes))
 print('num_comments:', 0 if num_comments=='' else int(num_comments))
 print('post_date:', decode_post_date(post_date))
 print('kewords:', keyword_list)
+print('author_belong:',author_belong)
+print('author_desc:', author_desc)
+print('num_subscription:', int(num_subscription))
