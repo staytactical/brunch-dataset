@@ -1,6 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
+import re
 
 def download(url, user_agent='wswp', num_retries=2, proxies=None):
     print('Downloading', url)
@@ -30,6 +31,11 @@ def decode_post_date(src):
         date = y + '-' + m + '-' + d 
     return date
 
+def no_spaces(str):
+    text = str.replace(" ", '')
+    text = text.replace('\n', '')
+    return text
+
 url = input('스크랩하고자 하는 url을 입력해주세요: ')
 html = download(url)
 soup = BeautifulSoup(html, 'lxml')
@@ -54,6 +60,13 @@ num_comments = soup.find('span', attrs={'class':'f_l text_comment_count text_def
 
 post_date = soup.find('span',attrs={'class':'f_l date'}).text
 
+keyword_list = []
+first_keyword = soup.find('ul', attrs={'class':'list_keyword'}).li
+keyword_list.append(no_spaces(first_keyword.get_text()))
+other_keywords = first_keyword.find_next_siblings('li')
+for keyword in other_keywords:
+    keyword_list.append(no_spaces(keyword.text))
+
 print('title:', title)
 print('sub_title:', sub_title)
 print('author:', author)
@@ -62,3 +75,4 @@ print('body_text:', text)
 print('likes:', 0 if likes=='' else int(likes))
 print('num_comments:', 0 if num_comments=='' else int(num_comments))
 print('post_date:', decode_post_date(post_date))
+print('kewords:', keyword_list)
