@@ -80,19 +80,6 @@ def scrap_single_post(url):
     num_subscription = soup.find('span', attrs={'class':'num_subscription'}).text
     num_subscription = 0 if num_subscription=='' else int(no_comma(num_subscription))
 
-    # print('title:', title)
-    # print('sub_title:', sub_title)
-    # print('body_text:', text)
-    # print('keywords:', keyword_list)
-    # print('likes:',likes)
-    # print('num_comments:', num_comments)
-    # print('post_date:', decode_post_date(post_date))
-    # print('author:', author)
-    # print('author_id:', author_id)
-    # print('author_belong:',author_belong)
-    # print('author_desc:', author_desc)
-    # print('num_subscription:', num_subscription)
-
     scrap_result = {'title':title, 'sub_title':sub_title, 'body_text':text, 'keywords':keyword_list, 'likes':likes, 
                     'num_comments':num_comments,'post_date':post_date, 'post_url':url, 'author':author, 'author_id':author_id,
                     'author_belong':author_belong, 'author_desc':author_desc, 'num_subscription':num_subscription }
