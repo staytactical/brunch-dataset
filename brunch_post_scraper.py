@@ -60,6 +60,7 @@ def scrap_single_post(url):
     num_comments = 0 if num_comments=='' else int(no_comma(num_comments))
 
     post_date = soup.find('span',attrs={'class':'f_l date'}).text
+    post_date = decode_post_date(post_date)
 
     keyword_list = []
     first_keyword = soup.find('ul', attrs={'class':'list_keyword'}).li
@@ -79,25 +80,41 @@ def scrap_single_post(url):
     num_subscription = soup.find('span', attrs={'class':'num_subscription'}).text
     num_subscription = 0 if num_subscription=='' else int(no_comma(num_subscription))
 
-    print('title:', title)
-    print('sub_title:', sub_title)
-    print('body_text:', text)
-    print('keywords:', keyword_list)
-    print('likes:',likes)
-    print('num_comments:', num_comments)
-    print('post_date:', decode_post_date(post_date))
-    print('author:', author)
-    print('author_id:', author_id)
-    print('author_belong:',author_belong)
-    print('author_desc:', author_desc)
-    print('num_subscription:', num_subscription)
+    # print('title:', title)
+    # print('sub_title:', sub_title)
+    # print('body_text:', text)
+    # print('keywords:', keyword_list)
+    # print('likes:',likes)
+    # print('num_comments:', num_comments)
+    # print('post_date:', decode_post_date(post_date))
+    # print('author:', author)
+    # print('author_id:', author_id)
+    # print('author_belong:',author_belong)
+    # print('author_desc:', author_desc)
+    # print('num_subscription:', num_subscription)
 
     scrap_result = {'title':title, 'sub_title':sub_title, 'body_text':text, 'keywords':keyword_list, 'likes':likes, 
                     'num_comments':num_comments,'post_date':post_date, 'post_url':url, 'author':author, 'author_id':author_id,
                     'author_belong':author_belong, 'author_desc':author_desc, 'num_subscription':num_subscription }
 
-    return scrap_result                
+    return scrap_result
+
+def print_scrap_result(scrap_dict):
+    print('title:', scrap_dict['title'])
+    print('sub_title:', scrap_dict['sub_title'])
+    print('body_text:',scrap_dict['body_text'])
+    print('keywords:', scrap_dict['keywords'])
+    print('likes:',scrap_dict['likes'])
+    print('num_comments:', scrap_dict['num_comments'])
+    print('post_date:', scrap_dict['post_date'])
+    print('post_url:', scrap_dict['post_url'])
+    print('author:', scrap_dict['author'])
+    print('author_id:', scrap_dict['author_id'])
+    print('author_belong:',scrap_dict['author_belong'])
+    print('author_desc:', scrap_dict['author_desc'])
+    print('num_subscription:', scrap_dict['num_subscription'])
+
 
 url = input('스크랩하고자 하는 url을 입력해주세요: ')
 result = scrap_single_post(url)
-print(result)
+print_scrap_result(result)
