@@ -1,6 +1,10 @@
 import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
+import csv
+import time
+import random
+import string
 import re
 
 def download(url, user_agent='wswp', num_retries=2, proxies=None):
@@ -36,12 +40,21 @@ def no_spaces(str):
     text = text.replace('\n', '')
     return text
 
-def no_comma(str):
+def over_thousand(str):
+    punct = string.punctuation
+    if '만' in str:
+        text = re.sub(r'[^\w\s]','',str)
+        text = text.replace('만','')
+        text = text + '000'
+        return text
     text = str.replace(',','')
     return text
 
 def scrap_single_post(url):
     html = download(url)
+    if html is None:
+        return None
+
     soup = BeautifulSoup(html, 'lxml')
 
     title = soup.find('h1',attrs={'class':'cover_title'}).text
@@ -54,10 +67,13 @@ def scrap_single_post(url):
         text = text + ' ' + s.text.replace('\xa0',' ')
 
     likes = soup.find('span', attrs={'class': 'f_l text_like_count text_default text_with_img_ico ico_likeit_like #like'}).text
-    likes = 0 if likes=='' else int(no_comma(likes))
+    likes = 0 if likes=='' else int(over_thousand(likes))
 
-    num_comments = soup.find('span', attrs={'class':'f_l text_comment_count text_default text_with_img_ico'}).text
-    num_comments = 0 if num_comments=='' else int(no_comma(num_comments))
+    try:
+        num_comments = soup.find('span', attrs={'class':'f_l text_comment_count text_default text_with_img_ico'}).text
+        num_comments = 0 if num_comments=='' else int(over_thousand(num_comments))
+    except AttributeError:
+        num_comments = 0
 
     post_date = soup.find('span',attrs={'class':'f_l date'}).text
     post_date = decode_post_date(post_date)
@@ -75,12 +91,16 @@ def scrap_single_post(url):
     try:
         author_belong = soup.find('span', attrs={'class':'author_belong'}).span.find_next_sibling('span').get_text()
     except AttributeError as e:
-        author_belong = "직업 없음"
-    author_desc = soup.find('p', attrs={'class':'txt_desc'}).text
-    num_subscription = soup.find('span', attrs={'class':'num_subscription'}).text
-    num_subscription = 0 if num_subscription=='' else int(no_comma(num_subscription))
+        author_belong = ""
+    try:    
+        author_desc = soup.find('p', attrs={'class':'txt_desc'}).text
+    except AttributeError:
+        author_desc = ""
 
-    scrap_result = {'title':title, 'sub_title':sub_title, 'body_text':text, 'keywords':keyword_list, 'likes':likes, 
+    num_subscription = soup.find('span', attrs={'class':'num_subscription'}).text
+    num_subscription = 0 if num_subscription=='' else int(over_thousand(num_subscription))
+
+    scrap_result = {'title':title, 'sub_title':sub_title, 'body_text':text, 'keyword':keyword_list, 'likes':likes, 
                     'num_comments':num_comments,'post_date':post_date, 'post_url':url, 'author':author, 'author_id':author_id,
                     'author_belong':author_belong, 'author_desc':author_desc, 'num_subscription':num_subscription }
 
@@ -90,7 +110,7 @@ def print_scrap_result(scrap_dict):
     print('title:', scrap_dict['title'])
     print('sub_title:', scrap_dict['sub_title'])
     print('body_text:',scrap_dict['body_text'])
-    print('keywords:', scrap_dict['keywords'])
+    print('keywords:', scrap_dict['keyword'])
     print('likes:',scrap_dict['likes'])
     print('num_comments:', scrap_dict['num_comments'])
     print('post_date:', scrap_dict['post_date'])
@@ -101,7 +121,53 @@ def print_scrap_result(scrap_dict):
     print('author_desc:', scrap_dict['author_desc'])
     print('num_subscription:', scrap_dict['num_subscription'])
 
+def get_urls_from_csv(keyword):
+    url_list = []
 
-url = input('스크랩하고자 하는 url을 입력해주세요: ')
-result = scrap_single_post(url)
-print_scrap_result(result)
+    with open('keyword_urls/' + keyword + '_url.csv', mode='r') as fp:
+        reader = csv.reader(fp)
+        for line in reader:
+            url_list = line
+
+    print(keyword, '로 수집한 url은 총 ', len(url_list),'개 입니다.')
+    return url_list
+
+def get_post_dict_list(url_list, keyword):
+    dict_list = []
+
+    for url in url_list:
+        result = scrap_single_post(url)
+        print_scrap_result(result)
+        if result is None:
+            continue
+        result['keyword'] = keyword
+        dict_list.append(result)
+        time.sleep(random.uniform(0.001,0.05))
+    return dict_list
+
+def save_dict_list_to_csv(keyword, dict_list):
+    labels = ['title','sub_title','body_text','keyword', 'likes',
+                'num_comments','post_date','post_url','author',
+                'author_id','author_belong','author_desc','num_subscription' ]
+    try:
+        with open( keyword + '_dataset.csv', 'w', -1, 'utf-8', newline='') as fp:
+            writer = csv.DictWriter(fp, fieldnames = labels)
+            writer.writeheader()
+            for elem in dict_list:
+                writer.writerow(elem)
+    except IOError:
+        print("I/O error")
+
+keywords = ['IT', '건강', '독서', '사랑', '심리', '에세이', '여행',
+            '역사', '영화', '예술', '운동', '음악', '직장생활',
+            '창업', '철학']
+
+for keyword in keywords:       
+    start = time.time()
+    url_list = get_urls_from_csv(keyword)
+    dict_list = get_post_dict_list(url_list, keyword)
+    save_dict_list_to_csv(keyword, dict_list)
+    end = time.time() - start
+    m = int(end // 60)
+    s = int(end % 60)
+    print(keyword + '_dataset.csv을 파일로 저장했습니다. 총',len(dict_list),'개의 글.', m,'분', s,'초 소요됨.')
