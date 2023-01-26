@@ -6,6 +6,7 @@ import time
 import random
 import string
 import re
+import keywords
 
 def download(url, user_agent='wswp', num_retries=2, proxies=None):
     print('Downloading', url)
@@ -64,7 +65,7 @@ def scrap_single_post(url):
     body_text = soup.find_all(['p','h2','h3','h4','h5','h6'], attrs={'class':'wrap_item item_type_text'})
     text = ''
     for s in body_text:
-        text = text + ' ' + s.text.replace('\xa0',' ')
+        text = text + '\n' + s.text.replace('\xa0',' ')
 
     likes = soup.find('span', attrs={'class': 'f_l text_like_count text_default text_with_img_ico ico_likeit_like #like'}).text
     likes = 0 if likes=='' else int(over_thousand(likes))
@@ -90,7 +91,7 @@ def scrap_single_post(url):
     author_id = author_page.replace('https://brunch.co.kr/','')
     try:
         author_belong = soup.find('span', attrs={'class':'author_belong'}).span.find_next_sibling('span').get_text()
-    except AttributeError as e:
+    except AttributeError:
         author_belong = ""
     try:    
         author_desc = soup.find('p', attrs={'class':'txt_desc'}).text
@@ -137,12 +138,12 @@ def get_post_dict_list(url_list, keyword):
 
     for url in url_list:
         result = scrap_single_post(url)
-        print_scrap_result(result)
+        # print_scrap_result(result)
         if result is None:
             continue
         result['keyword'] = keyword
         dict_list.append(result)
-        time.sleep(random.uniform(0.001,0.05))
+        time.sleep(random.uniform(0.001,0.3))
     return dict_list
 
 def save_dict_list_to_csv(keyword, dict_list):
@@ -158,9 +159,19 @@ def save_dict_list_to_csv(keyword, dict_list):
     except IOError:
         print("I/O error")
 
-keywords = ['IT', '건강', '독서', '사랑', '심리', '에세이', '여행',
-            '역사', '영화', '예술', '운동', '음악', '직장생활',
-            '창업', '철학']
+def get_sample_file(url):
+    sample = scrap_single_post(url)
+    print_scrap_result(sample)
+    with open('sample.csv', 'w', -1, 'utf-8', newline='') as fp:
+        labels = ['title','sub_title','body_text','keyword', 'likes',
+                    'num_comments','post_date','post_url','author',
+                    'author_id','author_belong','author_desc','num_subscription' ]
+        writer = csv.DictWriter(fp, fieldnames= labels)
+        writer.writeheader()
+        writer.writerow(sample)
+
+keywords = keywords.get_keywords()
+
 
 for keyword in keywords:       
     start = time.time()
