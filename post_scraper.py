@@ -8,6 +8,7 @@ import string
 import re
 import keywords
 
+
 def download(url, user_agent='wswp', num_retries=2, proxies=None):
     print('Downloading', url)
     headers = {'User-Agent' : user_agent}
@@ -24,6 +25,7 @@ def download(url, user_agent='wswp', num_retries=2, proxies=None):
         html = None
     return html
 
+
 def decode_post_date(src):
     dict_month = {'Jan':'01', 'Feb':'02', 'Mar':'03', 'Apr':'04', 'May':'05', 'Jun':'06', 
                   'Jul':'07', 'Aug':'08', 'Sep':'09', 'Oct':'10', 'Nov':'11', 'Dec':'12'}
@@ -36,10 +38,12 @@ def decode_post_date(src):
         date = y + '-' + m + '-' + d 
     return date
 
+
 def no_spaces(str):
     text = str.replace(" ", '')
     text = text.replace('\n', '')
     return text
+
 
 def over_thousand(str):
     punct = string.punctuation
@@ -50,6 +54,7 @@ def over_thousand(str):
         return text
     text = str.replace(',','')
     return text
+
 
 def scrap_single_post(url):
     html = download(url)
@@ -80,11 +85,14 @@ def scrap_single_post(url):
     post_date = decode_post_date(post_date)
 
     keyword_list = []
-    first_keyword = soup.find('ul', attrs={'class':'list_keyword'}).li
-    keyword_list.append(no_spaces(first_keyword.get_text()))
-    other_keywords = first_keyword.find_next_siblings('li')
-    for keyword in other_keywords:
-        keyword_list.append(no_spaces(keyword.text))
+    try:
+        first_keyword = soup.find('ul', attrs={'class':'list_keyword'}).li
+        keyword_list.append(no_spaces(first_keyword.get_text()))
+        other_keywords = first_keyword.find_next_siblings('li')
+        for keyword in other_keywords:
+            keyword_list.append(no_spaces(keyword.text))
+    except AttributeError:
+        pass
 
     author = soup.find('span', attrs={'class':'f_l text_author #author'}).a.text
     author_page = soup.find('span', attrs={'class':'f_l text_author #author'}).a['href']
@@ -107,6 +115,7 @@ def scrap_single_post(url):
 
     return scrap_result
 
+
 def print_scrap_result(scrap_dict):
     print('title:', scrap_dict['title'])
     print('sub_title:', scrap_dict['sub_title'])
@@ -122,16 +131,18 @@ def print_scrap_result(scrap_dict):
     print('author_desc:', scrap_dict['author_desc'])
     print('num_subscription:', scrap_dict['num_subscription'])
 
+
 def get_urls_from_csv(keyword):
     url_list = []
 
-    with open('keyword_urls/' + keyword + '_url.csv', mode='r') as fp:
+    with open('keyword_url_list/' + keyword + '_url_list.csv', mode='r') as fp:
         reader = csv.reader(fp)
         for line in reader:
             url_list = line
 
     print(keyword, '로 수집한 url은 총 ', len(url_list),'개 입니다.')
     return url_list
+
 
 def get_post_dict_list(url_list, keyword):
     dict_list = []
@@ -143,8 +154,9 @@ def get_post_dict_list(url_list, keyword):
             continue
         result['keyword'] = keyword
         dict_list.append(result)
-        time.sleep(random.uniform(0.001,0.3))
+        time.sleep(random.uniform(0.005,0.2))
     return dict_list
+
 
 def save_dict_list_to_csv(keyword, dict_list):
     labels = ['title','sub_title','body_text','keyword', 'likes',
@@ -159,6 +171,7 @@ def save_dict_list_to_csv(keyword, dict_list):
     except IOError:
         print("I/O error")
 
+
 def get_sample_file(url):
     sample = scrap_single_post(url)
     print_scrap_result(sample)
@@ -170,8 +183,8 @@ def get_sample_file(url):
         writer.writeheader()
         writer.writerow(sample)
 
-keywords = keywords.get_keywords()
 
+keywords = keywords.get_keywords()
 
 for keyword in keywords:       
     start = time.time()
