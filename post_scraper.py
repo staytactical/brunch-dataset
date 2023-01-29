@@ -23,6 +23,9 @@ def download(url, user_agent='wswp', num_retries=2, proxies=None):
     except requests.exceptions.RequestException as e:
         print('Download error:', e.reason)
         html = None
+    except requests.exceptions.InvalidHeader as e:
+        print('Download error:', e.reason)
+        html = None
     return html
 
 
