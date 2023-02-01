@@ -21,11 +21,10 @@ def download(url, user_agent='wswp', num_retries=2, proxies=None):
             if num_retries and 500 <= resp.status_code < 600:
                 return download(url, num_retries - 1)
     except requests.exceptions.RequestException as e:
-        print('Download error:', e.reason)
+        # print('Download error:', e.reason)
         html = None
     except requests.exceptions.InvalidHeader as e:
-        print('Download error:', e.reason)
-        html = None
+        html=None
     return html
 
 
@@ -155,9 +154,8 @@ def get_post_dict_list(url_list, keyword):
         # print_scrap_result(result)
         if result is None:
             continue
-        result['keyword'] = keyword
         dict_list.append(result)
-        time.sleep(random.uniform(0.005,0.2))
+        time.sleep(random.uniform(0.005,0.01))
     return dict_list
 
 
